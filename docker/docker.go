@@ -64,7 +64,7 @@ type (
 	}
 )
 
-const LOCAL_REGISTRY = "docker-registry:5000"
+const LocalRegistry = "docker-registry:5000"
 
 // Exec executes the plugin step
 func (p Plugin) Exec() error {
@@ -299,7 +299,7 @@ func commandTag(build Build, tag string) *exec.Cmd {
 func commandTagLocal(build Build, tag string) *exec.Cmd {
 	var (
 		source = build.Name
-		target = fmt.Sprintf("%s/%s:%s", LOCAL_REGISTRY, build.Repo, tag)
+		target = fmt.Sprintf("%s/%s:%s", LocalRegistry, build.Repo, tag)
 	)
 	return exec.Command(
 		dockerExe, "tag", source, target,
@@ -318,7 +318,7 @@ func commandPush(build Build, tag string) *exec.Cmd {
 
 // helper function to push to local registry
 func commandPushLocal(build Build, tag string) *exec.Cmd {
-	target := fmt.Sprintf("%s/%s:%s", LOCAL_REGISTRY, build.Repo, tag)
+	target := fmt.Sprintf("%s/%s:%s", LocalRegistry, build.Repo, tag)
 	return exec.Command(dockerExe, "push", target)
 }
 
@@ -330,7 +330,7 @@ func commandDaemon(daemon Daemon) *exec.Cmd {
 		args = append(args, "-s", daemon.StorageDriver)
 	}
 
-	args = append(args, "--insecure-registry", LOCAL_REGISTRY)
+	args = append(args, "--insecure-registry", LocalRegistry)
 
 	if daemon.Insecure && daemon.Registry != "" {
 		args = append(args, "--insecure-registry", daemon.Registry)
