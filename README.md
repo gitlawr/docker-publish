@@ -1,7 +1,8 @@
 docker-publish
 ========
 
-## ***FILL THIS OUT WITH A USEFUL DESCRIPTION OF THIS REPO***
+To build and publish images in pipeline publish image steps.
+It do publish to the local registry, and optionally publish to a remote registry.
 
 ## Building
 
