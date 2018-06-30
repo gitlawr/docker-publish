@@ -7,7 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/urfave/cli"
 
-	"github.com/rancher/docker-publish/docker"
+	"github.com/rancher/pipeline-docker-publish/docker"
 )
 
 var build = "0" // build number set at compile-time
