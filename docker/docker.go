@@ -68,7 +68,10 @@ type (
 	}
 )
 
-const LocalRegistry = "docker-registry:5000"
+const (
+	DefaultRegistry = "index.docker.io"
+	LocalRegistry   = "docker-registry:5000"
+)
 
 // Exec executes the plugin step
 func (p Plugin) Exec() error {
@@ -289,7 +292,7 @@ func hasProxyBuildArg(build *Build, key string) bool {
 // helper function to create the docker tag command.
 func commandTag(build Build, tag string) *exec.Cmd {
 	registry := ""
-	if build.Registry != "" {
+	if build.Registry != "" && !strings.Contains(build.Registry, DefaultRegistry) {
 		registry = build.Registry + "/"
 	}
 	var (
@@ -315,7 +318,7 @@ func commandTagLocal(build Build, tag string) *exec.Cmd {
 // helper function to create the docker push command.
 func commandPush(build Build, tag string) *exec.Cmd {
 	registry := ""
-	if build.Registry != "" {
+	if build.Registry != "" && !strings.Contains(build.Registry, DefaultRegistry) {
 		registry = build.Registry + "/"
 	}
 	target := fmt.Sprintf("%s%s:%s", registry, build.Repo, tag)
