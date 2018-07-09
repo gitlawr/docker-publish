@@ -12,6 +12,8 @@ import (
 type (
 	// Daemon defines Docker daemon parameters.
 	Daemon struct {
+		PushLocal     bool     // Push to local registry
+		LocalRegistry string   //Local docker registry
 		Registry      string   // Docker registry
 		Mirror        string   // Docker registry mirror
 		Insecure      bool     // Docker daemon enable insecure registries
@@ -37,21 +39,23 @@ type (
 
 	// Build defines Docker build parameters.
 	Build struct {
-		Remote      string   // Git remote URL
-		Name        string   // Docker build using default named tag
-		Dockerfile  string   // Docker build Dockerfile
-		Context     string   // Docker build context
-		Tags        []string // Docker build tags
-		Args        []string // Docker build args
-		ArgsEnv     []string // Docker build args from env
-		Target      string   // Docker build target
-		Squash      bool     // Docker build squash
-		Pull        bool     // Docker build pull
-		Compress    bool     // Docker build compress
-		Repo        string   // Docker build repository
-		Registry    string   // Docker push registry address
-		LabelSchema []string // Label schema map
-		NoCache     bool     // Docker build no-cache
+		PushLocal     bool     // Push to local registry
+		LocalRegistry string   //Local docker registry
+		Remote        string   // Git remote URL
+		Name          string   // Docker build using default named tag
+		Dockerfile    string   // Docker build Dockerfile
+		Context       string   // Docker build context
+		Tags          []string // Docker build tags
+		Args          []string // Docker build args
+		ArgsEnv       []string // Docker build args from env
+		Target        string   // Docker build target
+		Squash        bool     // Docker build squash
+		Pull          bool     // Docker build pull
+		Compress      bool     // Docker build compress
+		Repo          string   // Docker build repository
+		Registry      string   // Docker push registry address
+		LabelSchema   []string // Label schema map
+		NoCache       bool     // Docker build no-cache
 	}
 
 	// Plugin defines the Docker plugin parameters.
@@ -124,8 +128,10 @@ func (p Plugin) Exec() error {
 		cmds = append(cmds, commandTag(p.Build, tag)) // docker tag
 
 		// publish to local registry
-		cmds = append(cmds, commandTagLocal(p.Build, tag))
-		cmds = append(cmds, commandPushLocal(p.Build, tag))
+		if p.Build.PushLocal && p.Build.LocalRegistry != "" {
+			cmds = append(cmds, commandTagLocal(p.Build, tag))
+			cmds = append(cmds, commandPushLocal(p.Build, tag))
+		}
 
 		if p.PushRemote {
 			cmds = append(cmds, commandPush(p.Build, tag)) // docker push
@@ -299,7 +305,7 @@ func commandTag(build Build, tag string) *exec.Cmd {
 func commandTagLocal(build Build, tag string) *exec.Cmd {
 	var (
 		source = build.Name
-		target = fmt.Sprintf("%s/%s:%s", LocalRegistry, build.Repo, tag)
+		target = fmt.Sprintf("%s/%s:%s", build.LocalRegistry, build.Repo, tag)
 	)
 	return exec.Command(
 		dockerExe, "tag", source, target,
@@ -318,7 +324,7 @@ func commandPush(build Build, tag string) *exec.Cmd {
 
 // helper function to push to local registry
 func commandPushLocal(build Build, tag string) *exec.Cmd {
-	target := fmt.Sprintf("%s/%s:%s", LocalRegistry, build.Repo, tag)
+	target := fmt.Sprintf("%s/%s:%s", build.LocalRegistry, build.Repo, tag)
 	return exec.Command(dockerExe, "push", target)
 }
 
@@ -330,7 +336,9 @@ func commandDaemon(daemon Daemon) *exec.Cmd {
 		args = append(args, "-s", daemon.StorageDriver)
 	}
 
-	args = append(args, "--insecure-registry", LocalRegistry)
+	if daemon.PushLocal && daemon.LocalRegistry != "" {
+		args = append(args, "--insecure-registry", daemon.LocalRegistry)
+	}
 
 	if daemon.Insecure && daemon.Registry != "" {
 		args = append(args, "--insecure-registry", daemon.Registry)
